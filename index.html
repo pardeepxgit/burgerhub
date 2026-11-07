@@ -14,7 +14,7 @@
         body {
             background-color: #f8f9fa;
             color: #333;
-            padding-bottom: 100px;
+            padding-bottom: 110px;
         }
         header {
             background: #ff4757;
@@ -50,27 +50,62 @@
             max-width: 600px;
             margin: 0 auto;
         }
-        .table-input-container {
+        .order-details-box {
             background: white;
             padding: 12px 15px;
             border-radius: 12px;
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 10px;
         }
-        .table-input-container label {
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .input-row label {
             font-weight: 600;
             font-size: 14px;
         }
-        .table-input-container input {
+        .input-row input, .input-row textarea {
             padding: 8px;
             border: 1px solid #ced6e0;
             border-radius: 6px;
-            width: 120px;
+            font-size: 14px;
+        }
+        .input-row input {
+            width: 130px;
             text-align: center;
             font-weight: bold;
+        }
+        .input-row textarea {
+            width: 100%;
+            resize: none;
+            height: 40px;
+            margin-top: 5px;
+        }
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .cat-btn {
+            background: #dfe4ea;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+        .cat-btn.active {
+            background: #ff4757;
+            color: white;
         }
         .menu-item {
             background: white;
@@ -129,7 +164,7 @@
             color: #ff4757;
             font-size: 16px;
         }
-        .admin-panel input {
+        .admin-panel input, .admin-panel select {
             width: 100%;
             padding: 8px;
             margin-bottom: 8px;
@@ -188,7 +223,7 @@
 <body>
 
     <header>
-        <h1>Burger Hub</h1>
+        <h1>🍔 Burger Hub</h1>
         <p>Scan, Select & Order via WhatsApp!</p>
         <button class="admin-toggle-btn" onclick="toggleAdmin()">Admin Login</button>
     </header>
@@ -198,22 +233,41 @@
         <div id="adminPanel" class="admin-panel">
             <div id="loginSection">
                 <h3>Admin Login</h3>
-                <input type="password" id="adminPin" placeholder="Enter 6-digit PIN (201012)">
+                <input type="password" id="adminPin" placeholder="Enter 6-digit PIN">
                 <button onclick="verifyAdmin()">Login</button>
             </div>
             <div id="manageSection" style="display:none;">
                 <h3>Manage Menu Items</h3>
                 <input type="text" id="newItemName" placeholder="Item Name (e.g. French Fries)">
                 <input type="number" id="newItemPrice" placeholder="Price in ₹">
+                <select id="newItemCategory">
+                    <option value="Burgers">Burgers</option>
+                    <option value="Pizzas">Pizzas</option>
+                    <option value="Drinks">Drinks</option>
+                </select>
                 <button onclick="addNewItem()" style="background: #2ed573; margin-bottom: 10px;">Add Item to Menu</button>
                 <button onclick="toggleAdmin()" style="background: #747d8c;">Close Panel</button>
             </div>
         </div>
 
-        <!-- Table Number Input -->
-        <div class="table-input-container">
-            <label for="tableNo">Table No. / Name:</label>
-            <input type="text" id="tableNo" placeholder="e.g. Table 4">
+        <!-- Table Number & Instructions Box -->
+        <div class="order-details-box">
+            <div class="input-row">
+                <label for="tableNo">Table No. / Name:</label>
+                <input type="text" id="tableNo" placeholder="e.g. Table 4">
+            </div>
+            <div>
+                <label for="orderNote" style="font-size: 13px; color: #57606f;">Special Instructions (Optional):</label>
+                <textarea id="orderNote" placeholder="e.g. Less spicy, extra sauce..."></textarea>
+            </div>
+        </div>
+
+        <!-- Categories Filter -->
+        <div class="categories">
+            <button class="cat-btn active" onclick="filterMenu('All', this)">All Items</button>
+            <button class="cat-btn" onclick="filterMenu('Burgers', this)">Burgers</button>
+            <button class="cat-btn" onclick="filterMenu('Pizzas', this)">Pizzas</button>
+            <button class="cat-btn" onclick="filterMenu('Drinks', this)">Drinks</button>
         </div>
 
         <!-- Menu List -->
@@ -231,24 +285,35 @@
     </div>
 
     <script>
-        const ownerWhatsApp = "919876543210"; // Client ka WhatsApp number
+        const ownerWhatsApp = "919876543210"; 
         const correctPin = "201012";
 
         let menuItems = [
-            { id: 1, name: "Crispy Veg Burger", price: 99 },
-            { id: 2, name: "Cheese Burst Pizza", price: 199 },
-            { id: 3, name: "Cold Coffee", price: 79 },
-            { id: 4, name: "Paneer Tikka Burger", price: 149 }
+            { id: 1, name: "Crispy Veg Burger 🍔", price: 99, category: "Burgers" },
+            { id: 2, name: "Cheese Burst Pizza 🍕", price: 199, category: "Pizzas" },
+            { id: 3, name: "Cold Coffee 🥤", price: 79, category: "Drinks" },
+            { id: 4, name: "Paneer Tikka Burger 🍔", price: 149, category: "Burgers" }
         ];
 
-        const cart = {};
+        let cart = {};
+        let currentCategory = 'All';
         let isAdminLoggedIn = false;
 
         function renderMenu() {
             const menuList = document.getElementById('menu-list');
             menuList.innerHTML = '';
 
-            menuItems.forEach(item => {
+            let filteredItems = menuItems;
+            if (currentCategory !== 'All') {
+                filteredItems = menuItems.filter(item => item.category === currentCategory);
+            }
+
+            if (filteredItems.length === 0) {
+                menuList.innerHTML = '<p style="text-align:center; color:#747d8c; padding:20px;">No items found in this category.</p>';
+                return;
+            }
+
+            filteredItems.forEach(item => {
                 if (!cart[item.name]) {
                     cart[item.name] = { price: item.price, qty: 0 };
                 }
@@ -281,6 +346,18 @@
             updateTotal();
         }
 
+        function filterCategory(category) {
+            currentCategory = category;
+            renderMenu();
+        }
+
+        function filterMenu(category, btnElement) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            renderMenu();
+        }
+
         function changeQty(itemName, itemPrice, change) {
             if (!cart[itemName]) {
                 cart[itemName] = { price: itemPrice, qty: 0 };
@@ -307,11 +384,7 @@
 
         function toggleAdmin() {
             const panel = document.getElementById('adminPanel');
-            if (panel.style.display === 'block') {
-                panel.style.display = 'none';
-            } else {
-                panel.style.display = 'block';
-            }
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         }
 
         function verifyAdmin() {
@@ -323,20 +396,21 @@
                 renderMenu();
                 alert("Admin Login Successful!");
             } else {
-                alert("Galat PIN hai! Sahi PIN 201012 hai.");
+                alert("Galat PIN hai!");
             }
         }
 
         function addNewItem() {
             const name = document.getElementById('newItemName').value.trim();
             const price = parseInt(document.getElementById('newItemPrice').value);
+            const category = document.getElementById('newItemCategory').value;
 
             if (!name || isNaN(price)) {
                 alert("Kripya sahi naam aur price daalein!");
                 return;
             }
 
-            menuItems.push({ id: Date.now(), name: name, price: price });
+            menuItems.push({ id: Date.now(), name: name, price: price, category: category });
             document.getElementById('newItemName').value = '';
             document.getElementById('newItemPrice').value = '';
             renderMenu();
@@ -353,12 +427,19 @@
 
         function sendWhatsAppOrder() {
             const tableNo = document.getElementById('tableNo').value.trim();
+            const orderNote = document.getElementById('orderNote').value.trim();
+
             if (!tableNo) {
                 alert("Kripya apna Table Number ya Naam daalein!");
                 return;
             }
 
-            let orderText = `*New Table Order!*%0A*Table/Name:* ${tableNo}%0A%0A*Items:*%0A`;
+            let orderText = `*New Table Order!*%0A*Table/Name:* ${tableNo}%0A`;
+            if (orderNote) {
+                orderText += `*Note:* ${orderNote}%0A`;
+            }
+            orderText += `%0A*Items:*%0A`;
+
             let hasItems = false;
             let total = 0;
 
@@ -382,7 +463,6 @@
             window.open(url, '_blank');
         }
 
-        // Initial Load
         renderMenu();
     </script>
 </body>
