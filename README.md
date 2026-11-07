@@ -1,1 +1,470 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burger Hub - Table Ordering & Admin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            padding-bottom: 110px;
+        }
+        header {
+            background: #ff4757;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .admin-toggle-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .container {
+            padding: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .order-details-box {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .input-row label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .input-row input, .input-row textarea {
+            padding: 8px;
+            border: 1px solid #ced6e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .input-row input {
+            width: 130px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .input-row textarea {
+            width: 100%;
+            resize: none;
+            height: 40px;
+            margin-top: 5px;
+        }
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .cat-btn {
+            background: #dfe4ea;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+        .cat-btn.active {
+            background: #ff4757;
+            color: white;
+        }
+        .menu-item {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .item-details h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+            color: #2f3640;
+        }
+        .item-details .price {
+            font-size: 14px;
+            color: #ff4757;
+            font-weight: bold;
+        }
+        .item-action {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .item-action button {
+            background: #ff4757;
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .item-action span {
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+        }
+        .admin-panel {
+            background: #fff;
+            border: 2px dashed #ff4757;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .admin-panel h3 {
+            margin-bottom: 10px;
+            color: #ff4757;
+            font-size: 16px;
+        }
+        .admin-panel input, .admin-panel select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ced6e0;
+            border-radius: 6px;
+        }
+        .admin-panel button {
+            background: #2f3640;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .del-item-btn {
+            background: #ff4757 !important;
+            border-radius: 6px !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 4px 8px;
+            font-size: 12px !important;
+        }
+        .footer-cart {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        .cart-info {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2f3640;
+        }
+        .order-btn {
+            background: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(46, 213, 115, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🍔 Burger Hub</h1>
+        <p>Scan, Select & Order via WhatsApp!</p>
+        <button class="admin-toggle-btn" onclick="toggleAdmin()">Admin Login</button>
+    </header>
+
+    <div class="container">
+        <!-- Admin Login & Item Management Panel -->
+        <div id="adminPanel" class="admin-panel">
+            <div id="loginSection">
+                <h3>Admin Login</h3>
+                <input type="password" id="adminPin" placeholder="Enter 6-digit PIN">
+                <button onclick="verifyAdmin()">Login</button>
+            </div>
+            <div id="manageSection" style="display:none;">
+                <h3>Manage Menu Items</h3>
+                <input type="text" id="newItemName" placeholder="Item Name (e.g. French Fries)">
+                <input type="number" id="newItemPrice" placeholder="Price in ₹">
+                <select id="newItemCategory">
+                    <option value="Burgers">Burgers</option>
+                    <option value="Pizzas">Pizzas</option>
+                    <option value="Drinks">Drinks</option>
+                </select>
+                <button onclick="addNewItem()" style="background: #2ed573; margin-bottom: 10px;">Add Item to Menu</button>
+                <button onclick="toggleAdmin()" style="background: #747d8c;">Close Panel</button>
+            </div>
+        </div>
+
+        <!-- Table Number & Instructions Box -->
+        <div class="order-details-box">
+            <div class="input-row">
+                <label for="tableNo">Table No. / Name:</label>
+                <input type="text" id="tableNo" placeholder="e.g. Table 4">
+            </div>
+            <div>
+                <label for="orderNote" style="font-size: 13px; color: #57606f;">Special Instructions (Optional):</label>
+                <textarea id="orderNote" placeholder="e.g. Less spicy, extra sauce..."></textarea>
+            </div>
+        </div>
+
+        <!-- Categories Filter -->
+        <div class="categories">
+            <button class="cat-btn active" onclick="filterMenu('All', this)">All Items</button>
+            <button class="cat-btn" onclick="filterMenu('Burgers', this)">Burgers</button>
+            <button class="cat-btn" onclick="filterMenu('Pizzas', this)">Pizzas</button>
+            <button class="cat-btn" onclick="filterMenu('Drinks', this)">Drinks</button>
+        </div>
+
+        <!-- Menu List -->
+        <div id="menu-list">
+            <!-- Items will load dynamically -->
+        </div>
+    </div>
+
+    <!-- Bottom Checkout Bar -->
+    <div class="footer-cart">
+        <div class="cart-info">
+            Total: <span id="total-price">₹0</span>
+        </div>
+        <button class="order-btn" onclick="sendWhatsAppOrder()">Order on WhatsApp 🚀</button>
+    </div>
+
+    <script>
+        const ownerWhatsApp = "919876543210"; 
+        const correctPin = "201012";
+
+        let menuItems = [
+            { id: 1, name: "Crispy Veg Burger 🍔", price: 99, category: "Burgers" },
+            { id: 2, name: "Cheese Burst Pizza 🍕", price: 199, category: "Pizzas" },
+            { id: 3, name: "Cold Coffee 🥤", price: 79, category: "Drinks" },
+            { id: 4, name: "Paneer Tikka Burger 🍔", price: 149, category: "Burgers" }
+        ];
+
+        let cart = {};
+        let currentCategory = 'All';
+        let isAdminLoggedIn = false;
+
+        function renderMenu() {
+            const menuList = document.getElementById('menu-list');
+            menuList.innerHTML = '';
+
+            let filteredItems = menuItems;
+            if (currentCategory !== 'All') {
+                filteredItems = menuItems.filter(item => item.category === currentCategory);
+            }
+
+            if (filteredItems.length === 0) {
+                menuList.innerHTML = '<p style="text-align:center; color:#747d8c; padding:20px;">No items found in this category.</p>';
+                return;
+            }
+
+            filteredItems.forEach(item => {
+                if (!cart[item.name]) {
+                    cart[item.name] = { price: item.price, qty: 0 };
+                }
+
+                let itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                
+                let adminControls = '';
+                if (isAdminLoggedIn) {
+                    adminControls = `<button class="del-item-btn" onclick="deleteItem('${item.name}')">Delete</button>`;
+                } else {
+                    adminControls = `
+                        <button onclick="changeQty('${item.name}', ${item.price}, -1)">-</button>
+                        <span id="qty-${item.name}">${cart[item.name].qty}</span>
+                        <button onclick="changeQty('${item.name}', ${item.price}, 1)">+</button>
+                    `;
+                }
+
+                itemDiv.innerHTML = `
+                    <div class="item-details">
+                        <h3>${item.name}</h3>
+                        <div class="price">₹${item.price}</div>
+                    </div>
+                    <div class="item-action">
+                        ${adminControls}
+                    </div>
+                `;
+                menuList.appendChild(itemDiv);
+            });
+            updateTotal();
+        }
+
+        function filterCategory(category) {
+            currentCategory = category;
+            renderMenu();
+        }
+
+        function filterMenu(category, btnElement) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            renderMenu();
+        }
+
+        function changeQty(itemName, itemPrice, change) {
+            if (!cart[itemName]) {
+                cart[itemName] = { price: itemPrice, qty: 0 };
+            }
+            cart[itemName].qty += change;
+            if (cart[itemName].qty < 0) {
+                cart[itemName].qty = 0;
+            }
+            
+            let qtySpan = document.getElementById(`qty-${itemName}`);
+            if (qtySpan) {
+                qtySpan.innerText = cart[itemName].qty;
+            }
+            updateTotal();
+        }
+
+        function updateTotal() {
+            let total = 0;
+            for (let item in cart) {
+                total += cart[item].price * cart[item].qty;
+            }
+            document.getElementById('total-price').innerText = `₹${total}`;
+        }
+
+        function toggleAdmin() {
+            const panel = document.getElementById('adminPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function verifyAdmin() {
+            const pin = document.getElementById('adminPin').value.trim();
+            if (pin === correctPin) {
+                isAdminLoggedIn = true;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('manageSection').style.display = 'block';
+                renderMenu();
+                alert("Admin Login Successful!");
+            } else {
+                alert("Galat PIN hai!");
+            }
+        }
+
+        function addNewItem() {
+            const name = document.getElementById('newItemName').value.trim();
+            const price = parseInt(document.getElementById('newItemPrice').value);
+            const category = document.getElementById('newItemCategory').value;
+
+            if (!name || isNaN(price)) {
+                alert("Kripya sahi naam aur price daalein!");
+                return;
+            }
+
+            menuItems.push({ id: Date.now(), name: name, price: price, category: category });
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemPrice').value = '';
+            renderMenu();
+            alert("Naya item jud gaya hai!");
+        }
+
+        function deleteItem(itemName) {
+            if (confirm(`Kya aap "${itemName}" ko menu se hatana chahte hain?`)) {
+                menuItems = menuItems.filter(item => item.name !== itemName);
+                delete cart[itemName];
+                renderMenu();
+            }
+        }
+
+        function sendWhatsAppOrder() {
+            const tableNo = document.getElementById('tableNo').value.trim();
+            const orderNote = document.getElementById('orderNote').value.trim();
+
+            if (!tableNo) {
+                alert("Kripya apna Table Number ya Naam daalein!");
+                return;
+            }
+
+            let orderText = `*New Table Order!*%0A*Table/Name:* ${tableNo}%0A`;
+            if (orderNote) {
+                orderText += `*Note:* ${orderNote}%0A`;
+            }
+            orderText += `%0A*Items:*%0A`;
+
+            let hasItems = false;
+            let total = 0;
+
+            for (let item in cart) {
+                if (cart[item].qty > 0) {
+                    hasItems = true;
+                    let cost = cart[item].price * cart[item].qty;
+                    total += cost;
+                    orderText += `- ${item} x ${cart[item].qty} = ₹${cost}%0A`;
+                }
+            }
+
+            if (!hasItems) {
+                alert("Kam se kam ek item toh select karein!");
+                return;
+            }
+
+            orderText += `%0A*Total Amount: ₹${total}*`;
+            
+            let url = `https://wa.me/${ownerWhatsApp}?text=${orderText}`;
+            window.open(url, '_blank');
+        }
+
+        renderMenu();
+    </script>
+</body>
+</html>
